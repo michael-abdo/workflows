@@ -10,6 +10,15 @@ A minimal, efficient workflow automation system using direct tmux operations.
 - **`quick_task.js`** - User-friendly task runner interface
 - **`shared/workflow_utils.js`** - Shared utilities and helpers
 
+## Workflow System
+
+### Predefined Workflows
+The system includes several predefined workflows in the `workflows/` directory:
+- **`default.json`** - Standard development workflow: implement → test → document → finalize
+- **`debug.json`** - Debugging workflow: reproduce → diagnose → fix → verify
+- **`review.json`** - Code review workflow: analyze → refactor → test → commit
+- **`phase.json`** - Phase implementation workflow: execute → compare → deduplicate → cleanup
+
 ## Usage
 
 ### Quick Start
@@ -38,6 +47,55 @@ node task_chain_launcher.js simple_task_progression.json [instanceId]
 - Node.js (ES modules support)
 - tmux installed and available in PATH
 - Claude instances running in tmux sessions named `claude_<instanceId>`
+
+## Creating Custom Workflows
+
+To create a custom workflow:
+
+1. Create a new JSON file in the `workflows/` directory
+2. Follow the workflow schema (see `workflow-schema.json` for reference)
+3. Define your workflow stages with keywords and instructions
+
+### Example Custom Workflow
+```json
+{
+  "name": "custom",
+  "description": "My custom workflow for specific tasks",
+  "chains": [
+    {
+      "keyword": "PLANNED",
+      "instruction": "Now implement the plan for '{{TASK}}'. End by saying BUILT",
+      "nextKeyword": "BUILT"
+    },
+    {
+      "keyword": "BUILT",
+      "instruction": "Test the implementation. End by saying VERIFIED",
+      "nextKeyword": "VERIFIED"
+    },
+    {
+      "keyword": "VERIFIED",
+      "instruction": "Great work! Task '{{TASK}}' is complete!"
+    }
+  ],
+  "initialPrompt": "Plan the approach for '{{TASK}}'. When done planning, say PLANNED",
+  "options": {
+    "pollInterval": 5,
+    "timeout": 900,
+    "retryAttempts": 3,
+    "retryDelay": 2
+  }
+}
+```
+
+### Using Custom Workflows
+Once created, your workflow will be automatically discovered:
+```bash
+node quick_task.js "Your task" --preset custom
+```
+
+### Template Placeholders
+- `{{TASK}}` - Will be replaced with the actual task description
+- Add your own placeholders and pass them via the config
 
 ## Architecture
 
