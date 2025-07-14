@@ -13,7 +13,7 @@ import path from 'path';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { parseCommandLineArgs, replaceTemplatePlaceholders } from './shared/workflow_utils.js';
+import { parseCommandLineArgs, replaceTemplatePlaceholders, sessionNameToInstanceId } from './shared/workflow_utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -98,17 +98,6 @@ function buildChains(stages) {
   return chains;
 }
 
-function sessionNameToInstanceId(sessionName) {
-  // Handle different session name formats:
-  // claude_auto_1234567 -> auto_1234567
-  // claude_instance_123 -> instance_123  
-  // test -> test (pass through exact name)
-  // my_session -> my_session (pass through)
-  if (sessionName.startsWith('claude_')) {
-    return sessionName.replace('claude_', '');
-  }
-  return sessionName;
-}
 
 async function handleNamedSession(customName) {
   // Import tmux utils

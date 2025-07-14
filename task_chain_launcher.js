@@ -18,26 +18,6 @@ import { ChainKeywordMonitor } from './chain_keyword_monitor.js';
 import { replaceTemplatePlaceholders, loadConfig } from './shared/workflow_utils.js';
 import { sendToInstance, getLatestInstanceId } from './tmux_utils.js';
 
-async function loadTaskConfig(configPath) {
-  try {
-    const configData = await fs.promises.readFile(configPath, 'utf8');
-    const config = JSON.parse(configData);
-    
-    if (!config.taskDescription) {
-      throw new Error('Config must include taskDescription field');
-    }
-    if (!config.initialPrompt) {
-      throw new Error('Config must include initialPrompt field');
-    }
-    
-    return config;
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      throw new Error(`Config file not found: ${configPath}`);
-    }
-    throw error;
-  }
-}
 
 
 
@@ -58,7 +38,7 @@ async function main() {
     
     // Load config
     console.log(`📖 Loading config from: ${configPath}`);
-    const config = await loadTaskConfig(configPath);
+    const config = await loadConfig(configPath, ['taskDescription', 'initialPrompt']);
     
     // Get instance ID if not provided
     if (!instanceId) {

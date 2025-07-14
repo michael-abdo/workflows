@@ -7,6 +7,7 @@ import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
+import { instanceIdToSessionName } from './shared/workflow_utils.js';
 
 const execAsync = promisify(exec);
 
@@ -106,20 +107,8 @@ function sanitizeText(text) {
  * Returns format compatible with MCP bridge: {success: true/false, error?: string}
  */
 export async function sendToInstance(instanceId, text) {
-  // Handle different instance ID formats:
-  // - auto_1234567 -> claude_auto_1234567
-  // - test -> test (custom named session)
-  // - spec_1_1_123 -> claude_spec_1_1_123
-  let sessionName;
-  
-  // If instanceId already looks like a session name (no underscores or doesn't start with common prefixes)
-  if (!instanceId.includes('_') || (!instanceId.startsWith('auto_') && !instanceId.startsWith('spec_'))) {
-    // Assume it's a direct session name
-    sessionName = instanceId;
-  } else {
-    // Traditional format - add claude_ prefix
-    sessionName = `claude_${instanceId}`;
-  }
+  // Convert instance ID to session name using shared utility
+  const sessionName = instanceIdToSessionName(instanceId);
   
   // Validate session exists first
   if (!(await sessionExists(sessionName))) {
@@ -157,17 +146,8 @@ export async function sendToInstance(instanceId, text) {
  * Returns format compatible with MCP bridge: {success: true, output: string}
  */
 export async function readFromInstance(instanceId, lines = 50) {
-  // Handle different instance ID formats (same logic as sendToInstance)
-  let sessionName;
-  
-  // If instanceId already looks like a session name (no underscores or doesn't start with common prefixes)
-  if (!instanceId.includes('_') || (!instanceId.startsWith('auto_') && !instanceId.startsWith('spec_'))) {
-    // Assume it's a direct session name
-    sessionName = instanceId;
-  } else {
-    // Traditional format - add claude_ prefix
-    sessionName = `claude_${instanceId}`;
-  }
+  // Convert instance ID to session name using shared utility
+  const sessionName = instanceIdToSessionName(instanceId);
   
   // Validate session exists first
   if (!(await sessionExists(sessionName))) {

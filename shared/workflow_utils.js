@@ -60,10 +60,19 @@ export function isActualCompletionSignal(line, keyword) {
  * Load and parse JSON configuration file
  * Consolidated from multiple config loading implementations
  */
-export async function loadConfig(configPath) {
+export async function loadConfig(configPath, requiredFields = []) {
   try {
     const configData = await fs.promises.readFile(configPath, 'utf8');
-    return JSON.parse(configData);
+    const config = JSON.parse(configData);
+    
+    // Validate required fields if specified
+    for (const field of requiredFields) {
+      if (!config[field]) {
+        throw new Error(`Config must include ${field} field`);
+      }
+    }
+    
+    return config;
   } catch (error) {
     if (error.code === 'ENOENT') {
       throw new Error(`Config file not found: ${configPath}`);
@@ -129,6 +138,41 @@ export function parseCommandLineArgs(args, options = {}) {
 }
 
 /**
+ * Normalize instance ID to session name format
+ * Handles different instance ID formats consistently
+ */
+export function normalizeInstanceId(instanceId) {
+  // Handle different instance ID formats:
+  // - auto_1234567 -> claude_auto_1234567 (traditional)
+  // - test -> test (custom named session)
+  // - spec_1_1_123 -> claude_spec_1_1_123 (traditional)
+  
+  if (!instanceId.includes('_') || (!instanceId.startsWith('auto_') && !instanceId.startsWith('spec_'))) {
+    return instanceId; // Direct session name
+  }
+  return `claude_${instanceId}`; // Traditional format
+}
+
+/**
+ * Convert instance ID to session name format
+ * Alias for normalizeInstanceId for clarity
+ */
+export function instanceIdToSessionName(instanceId) {
+  return normalizeInstanceId(instanceId);
+}
+
+/**
+ * Convert session name back to instance ID format
+ * Reverses the instanceIdToSessionName conversion
+ */
+export function sessionNameToInstanceId(sessionName) {
+  if (sessionName.startsWith('claude_')) {
+    return sessionName.replace('claude_', '');
+  }
+  return sessionName;
+}
+
+/**
  * Base monitor event handlers
  * Common event setup for keyword monitors
  */
@@ -158,5 +202,8 @@ export default {
   loadConfig,
   replaceTemplatePlaceholders,
   parseCommandLineArgs,
-  setupMonitorEventHandlers
+  setupMonitorEventHandlers,
+  normalizeInstanceId,
+  instanceIdToSessionName,
+  sessionNameToInstanceId
 };
