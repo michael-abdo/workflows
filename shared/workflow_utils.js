@@ -197,6 +197,144 @@ export function setupMonitorEventHandlers(monitor, options = {}) {
   });
 }
 
+/**
+ * List all available workflow presets from the workflows directory
+ * Returns array of workflow names without .json extension
+ */
+export async function listAvailableWorkflows() {
+  try {
+    const workflowsDir = join(dirname(dirname(__filename)), 'workflows');
+    const files = await fs.promises.readdir(workflowsDir);
+    
+    // Filter for .json files and remove extension
+    const workflows = files
+      .filter(file => file.endsWith('.json') && !file.startsWith('.'))
+      .map(file => file.replace('.json', ''))
+      .sort();
+    
+    return workflows;
+  } catch (error) {
+    // If workflows directory doesn't exist, return empty array
+    if (error.code === 'ENOENT') {
+      return [];
+    }
+    throw error;
+  }
+}
+
+/**
+ * Validate a workflow configuration structure
+ * Returns {valid: boolean, errors: string[]}
+ */
+export function validateWorkflow(workflow) {
+  const errors = [];
+  
+  // Check required top-level fields
+  const requiredFields = ['name', 'description', 'chains', 'initialPrompt', 'options'];
+  for (const field of requiredFields) {
+    if (!workflow[field]) {
+      errors.push(`Missing required field: ${field}`);
+    }
+  }
+  
+  // Validate chains structure
+  if (Array.isArray(workflow.chains)) {
+    if (workflow.chains.length === 0) {
+      errors.push('Chains array cannot be empty');
+    }
+    
+    workflow.chains.forEach((chain, index) => {
+      if (!chain.keyword) {
+        errors.push(`Chain ${index} missing required field: keyword`);
+      }
+      if (!chain.instruction) {
+        errors.push(`Chain ${index} missing required field: instruction`);
+      }
+      // nextKeyword is optional on the last chain
+      if (index < workflow.chains.length - 1 && !chain.nextKeyword) {
+        errors.push(`Chain ${index} missing nextKeyword (required except on last chain)`);
+      }
+    });
+  } else if (workflow.chains) {
+    errors.push('Chains must be an array');
+  }
+  
+  // Validate options structure
+  if (workflow.options && typeof workflow.options !== 'object') {
+    errors.push('Options must be an object');
+  }
+  
+  // Check for {{TASK}} placeholder in prompts
+  if (workflow.initialPrompt && !workflow.initialPrompt.includes('{{TASK}}')) {
+    errors.push('initialPrompt should include {{TASK}} placeholder');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+/**
+ * Build a workflow configuration from a preset
+ * Loads the workflow and replaces {{TASK}} placeholders
+ */
+export async function buildWorkflowFromPreset(presetName, task, instanceId = null) {
+  // Load the workflow preset
+  const workflow = await loadWorkflow(presetName);
+  
+  // Build the config in the format expected by task_chain_launcher
+  const config = {
+    instanceId: instanceId || "YOUR_INSTANCE_ID",
+    taskDescription: task,
+    chains: workflow.chains.map(chain => ({
+      keyword: chain.keyword,
+      instruction: replaceTemplatePlaceholders(chain.instruction, { TASK: task }),
+      ...(chain.nextKeyword && { nextKeyword: chain.nextKeyword })
+    })),
+    initialPrompt: replaceTemplatePlaceholders(workflow.initialPrompt, { TASK: task }),
+    options: workflow.options || {
+      pollInterval: 5,
+      timeout: 600,
+      retryAttempts: 3,
+      retryDelay: 2
+    }
+  };
+  
+  return config;
+}
+
+/**
+ * Load a workflow by name from the workflows directory
+ * Validates the workflow structure before returning
+ */
+export async function loadWorkflow(name) {
+  const workflowsDir = join(dirname(dirname(__filename)), 'workflows');
+  const workflowPath = join(workflowsDir, `${name}.json`);
+  
+  try {
+    const workflowData = await fs.promises.readFile(workflowPath, 'utf8');
+    const workflow = JSON.parse(workflowData);
+    
+    // Validate the loaded workflow
+    const validation = validateWorkflow(workflow);
+    if (!validation.valid) {
+      throw new Error(`Invalid workflow '${name}': ${validation.errors.join(', ')}`);
+    }
+    
+    return workflow;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      // Check available workflows for helpful error message
+      const available = await listAvailableWorkflows();
+      throw new Error(
+        `Workflow '${name}' not found. Available workflows: ${available.join(', ') || 'none'}`
+      );
+    }
+    throw error;
+  }
+}
+
 export default {
   isActualCompletionSignal,
   loadConfig,
@@ -205,5 +343,9 @@ export default {
   setupMonitorEventHandlers,
   normalizeInstanceId,
   instanceIdToSessionName,
-  sessionNameToInstanceId
+  sessionNameToInstanceId,
+  listAvailableWorkflows,
+  loadWorkflow,
+  validateWorkflow,
+  buildWorkflowFromPreset
 };

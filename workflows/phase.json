@@ -1,0 +1,32 @@
+{
+  "name": "phase",
+  "description": "Phase implementation workflow: execute → compare → deduplicate → cleanup",
+  "chains": [
+    {
+      "keyword": "EXECUTE_FINISHED",
+      "instruction": "Compare the implementation against requirements. List completed, missing, partial items and deviations. End by saying COMPARISON_FINISHED",
+      "nextKeyword": "COMPARISON_FINISHED"
+    },
+    {
+      "keyword": "COMPARISON_FINISHED",
+      "instruction": "Eliminate all duplicated functionality. Identify semantic twins and consolidate to canonical implementations. End by saying DUPLICATION_ELIMINATED",
+      "nextKeyword": "DUPLICATION_ELIMINATED"
+    },
+    {
+      "keyword": "DUPLICATION_ELIMINATED",
+      "instruction": "Clean up code, update documentation, run tests, and commit all changes. End by saying COMMIT_FINISHED",
+      "nextKeyword": "COMMIT_FINISHED"
+    },
+    {
+      "keyword": "COMMIT_FINISHED",
+      "instruction": "🎉 Phase complete! All requirements implemented, duplicates eliminated, and changes committed."
+    }
+  ],
+  "initialPrompt": "Execute the following phase implementation: '{{TASK}}'. Analyze requirements, implement changes, and verify completion. When done, say EXECUTE_FINISHED",
+  "options": {
+    "pollInterval": 5,
+    "timeout": 3600,
+    "retryAttempts": 3,
+    "retryDelay": 3
+  }
+}

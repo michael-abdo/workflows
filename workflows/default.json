@@ -1,0 +1,32 @@
+{
+  "name": "default",
+  "description": "Standard development workflow: implement → test → document → finalize",
+  "chains": [
+    {
+      "keyword": "IMPLEMENTED",
+      "instruction": "Great implementation! Now test '{{TASK}}' with various inputs and edge cases. Show the test results. End by saying TESTED",
+      "nextKeyword": "TESTED"
+    },
+    {
+      "keyword": "TESTED",
+      "instruction": "Excellent testing! Now document '{{TASK}}' with clear comments and usage examples. End by saying DOCUMENTED",
+      "nextKeyword": "DOCUMENTED"
+    },
+    {
+      "keyword": "DOCUMENTED",
+      "instruction": "Perfect! Now provide a final summary of '{{TASK}}' including what was done and any important notes. End by saying COMPLETE",
+      "nextKeyword": "COMPLETE"
+    },
+    {
+      "keyword": "COMPLETE",
+      "instruction": "🎉 Excellent work! You have successfully completed all stages for: '{{TASK}}'"
+    }
+  ],
+  "initialPrompt": "Please implement the following: '{{TASK}}'. Create a working solution and show the code. When done, say IMPLEMENTED",
+  "options": {
+    "pollInterval": 5,
+    "timeout": 600,
+    "retryAttempts": 3,
+    "retryDelay": 2
+  }
+}

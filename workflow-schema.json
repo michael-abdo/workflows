@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Workflow Definition Schema",
+  "type": "object",
+  "required": ["name", "description", "chains", "initialPrompt", "options"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique identifier for the workflow preset"
+    },
+    "description": {
+      "type": "string", 
+      "description": "Human-readable description of what this workflow does"
+    },
+    "chains": {
+      "type": "array",
+      "description": "Sequential chain of workflow stages",
+      "items": {
+        "type": "object",
+        "required": ["keyword", "instruction"],
+        "properties": {
+          "keyword": {
+            "type": "string",
+            "description": "Keyword to detect for this stage completion"
+          },
+          "instruction": {
+            "type": "string",
+            "description": "Instruction to send when keyword detected. Supports {{TASK}} placeholder"
+          },
+          "nextKeyword": {
+            "type": "string",
+            "description": "Expected keyword for next stage (optional on final stage)"
+          }
+        }
+      }
+    },
+    "initialPrompt": {
+      "type": "string",
+      "description": "Initial instruction to start the workflow. Supports {{TASK}} placeholder"
+    },
+    "options": {
+      "type": "object",
+      "description": "Workflow execution options",
+      "properties": {
+        "pollInterval": {
+          "type": "number",
+          "default": 5,
+          "description": "Seconds between output polls"
+        },
+        "timeout": {
+          "type": "number",
+          "default": 600,
+          "description": "Total timeout in seconds"
+        },
+        "retryAttempts": {
+          "type": "number",
+          "default": 3,
+          "description": "Number of retry attempts for failures"
+        },
+        "retryDelay": {
+          "type": "number",
+          "default": 2,
+          "description": "Seconds between retry attempts"
+        }
+      }
+    }
+  }
+}

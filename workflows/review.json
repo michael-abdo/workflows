@@ -1,0 +1,32 @@
+{
+  "name": "review",
+  "description": "Code review workflow: analyze → refactor → test → commit",
+  "chains": [
+    {
+      "keyword": "ANALYZED",
+      "instruction": "Good analysis! Now refactor the code for '{{TASK}}' following best practices. End by saying REFACTORED",
+      "nextKeyword": "REFACTORED"
+    },
+    {
+      "keyword": "REFACTORED",
+      "instruction": "Good refactoring! Now test '{{TASK}}' to ensure everything still works correctly. End by saying TESTED",
+      "nextKeyword": "TESTED"
+    },
+    {
+      "keyword": "TESTED",
+      "instruction": "Great work! Now create a git commit for '{{TASK}}' with a clear commit message. End by saying COMMITTED",
+      "nextKeyword": "COMMITTED"
+    },
+    {
+      "keyword": "COMMITTED",
+      "instruction": "🎉 Excellent review process! You have successfully reviewed and improved: '{{TASK}}'"
+    }
+  ],
+  "initialPrompt": "Please analyze the following code/feature: '{{TASK}}'. Review for quality, performance, and best practices. When done with analysis, say ANALYZED",
+  "options": {
+    "pollInterval": 5,
+    "timeout": 1200,
+    "retryAttempts": 3,
+    "retryDelay": 2
+  }
+}

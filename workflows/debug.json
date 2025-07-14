@@ -1,0 +1,32 @@
+{
+  "name": "debug",
+  "description": "Debugging workflow: reproduce → diagnose → fix → verify",
+  "chains": [
+    {
+      "keyword": "REPRODUCED",
+      "instruction": "Good reproduction! Now diagnose the root cause of '{{TASK}}'. Explain what's causing the issue. End by saying DIAGNOSED",
+      "nextKeyword": "DIAGNOSED"
+    },
+    {
+      "keyword": "DIAGNOSED",
+      "instruction": "Good diagnosis! Now implement a fix for '{{TASK}}'. Show the corrected code. End by saying FIXED",
+      "nextKeyword": "FIXED"
+    },
+    {
+      "keyword": "FIXED",
+      "instruction": "Good fix! Now verify that '{{TASK}}' is fully resolved. Run tests to confirm. End by saying VERIFIED",
+      "nextKeyword": "VERIFIED"
+    },
+    {
+      "keyword": "VERIFIED",
+      "instruction": "🎉 Excellent debugging! You have successfully resolved: '{{TASK}}'"
+    }
+  ],
+  "initialPrompt": "Please reproduce the following issue: '{{TASK}}'. Show the problem occurring and confirm you can reproduce it. When done, say REPRODUCED",
+  "options": {
+    "pollInterval": 5,
+    "timeout": 900,
+    "retryAttempts": 3,
+    "retryDelay": 2
+  }
+}
